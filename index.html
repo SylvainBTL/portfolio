@@ -2,71 +2,79 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Visualiseur PDF</title>
+  <title>PDF.js Viewer Multi-pages</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0px;
+    }
+   .download-cta {
+    top: 1%;
+    right: 1%;
+    position: absolute;
+      display: inline-block;
+      margin: 20px auto;
+      padding: 12px 25px;
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+      text-align: center;
+      transition: all 0.3s ease;
+      font-size: 1.1rem;
+    }
+
+    .download-cta:hover {
+      background: rgba(255, 255, 255, 0.4);
+      color: #000;
+      border-color: rgba(255, 255, 255, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+    canvas {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+  </style>
 </head>
 <body>
-  <h1>Visualiseur PDF.js - Toutes les pages</h1>
+
+    <a class="download-cta" href="https://raw.githubusercontent.com/SylvainBTL/portfolio/44ef4608fae3df6d8137893864deccf563fe5820/Portfolio-SylvainBoutoille-2025.pdf" download>
+    Télécharger le PDF
+  </a>
   <div id="pdf-container"></div>
-  
-  <!-- PDF.js UMD via unpkg -->
-  <script src="https://unpkg.com/pdfjs-dist@3.10.377/build/pdf.js"></script>
-  
+
   <script>
-    // Fonction pour attendre que PDF.js soit chargé
-    function waitForPdfJs() {
-      return new Promise((resolve) => {
-        if (typeof pdfjsLib !== 'undefined') {
-          resolve();
-        } else {
-          setTimeout(() => {
-            waitForPdfJs().then(resolve);
-          }, 50);
-        }
-      });
-    }
-    
-    // Attendre que PDF.js soit complètement chargé
-    waitForPdfJs().then(() => {
-      
-      // URL raw de ton PDF sur GitHub
-      const url = 'https://raw.githubusercontent.com/SylvainBTL/portfolio/5b4efef64fbf24ad84a01be004638f0b611c3206/Portfolio-SylvainBoutoille-2025.pdf';
-      
-      // Configurer le worker PDF.js
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.10.377/build/pdf.worker.js';
-      
-      const container = document.getElementById('pdf-container');
-      
-      // Charger le PDF
-      pdfjsLib.getDocument(url).promise.then(pdf => {
-        console.log(`PDF chargé avec ${pdf.numPages} pages.`);
-        
-        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-          pdf.getPage(pageNumber).then(page => {
-            const scale = 1.5;
-            const viewport = page.getViewport({ scale });
-            
-            // Créer un canvas pour chaque page
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-            
-            // Ajouter une marge entre les pages
-            canvas.style.display = 'block';
-            canvas.style.marginBottom = '20px';
-            canvas.style.border = '1px solid #ccc';
-            
-            container.appendChild(canvas);
-            
-            // Rendu de la page
-            page.render({ canvasContext: context, viewport }).promise.then(() => {
-              console.log(`Page ${pageNumber} rendue`);
-            });
-          });
-        }
-      }).catch(err => {
-        console.error('Erreur lors du chargement du PDF:', err);
-      });
+    const url = 'https://raw.githubusercontent.com/SylvainBTL/portfolio/44ef4608fae3df6d8137893864deccf563fe5820/Portfolio-SylvainBoutoille-2025.pdf';
+    const container = document.getElementById('pdf-container');
+
+    pdfjsLib.getDocument(url).promise.then(pdf => {
+      console.log(`Nombre de pages: ${pdf.numPages}`);
+
+      // Boucle sur toutes les pages
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+        pdf.getPage(pageNumber).then(page => {
+          const scale = 1.5;
+          const viewport = page.getViewport({ scale });
+
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+
+          container.appendChild(canvas);
+
+          page.render({ canvasContext: context, viewport: viewport });
+        });
+      }
+    }).catch(err => {
+      console.error('Erreur lors du chargement du PDF:', err);
     });
   </script>
 </body>
