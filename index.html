@@ -2,47 +2,46 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>PDF Présentation</title>
-  <style>
-    html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
-    #pdfViewer { width: 100%; height: 100vh; display: block; margin: 0 auto; }
-  </style>
+  <title>Visualiseur PDF</title>
 </head>
 <body>
-  <canvas id="pdfViewer"></canvas>
+  <h1>Visualiseur PDF.js - Toutes les pages</h1>
+  <div id="pdf-container"></div>
 
-  <!-- PDF.js via CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.10.215/pdf.min.js"></script>
-  <script>
-    const url = 'Portfolio-SylvainBoutoille-2025.pdf'; // Ton PDF ici
+  <script type="module">
+    import { pdfjsLib } from 'https://mozilla.github.io/pdf.js/build/pdf.mjs';
 
-    // Worker PDF.js via CDN
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.10.215/pdf.worker.min.js';
+    // URL de ton PDF sur GitHub (raw)
+    const url = 'https://raw.githubusercontent.com/SylvainBTL/portfolio/5b4efef64fbf24ad84a01be004638f0b611c3206/Portfolio-SylvainBoutoille-2025.pdf';
 
-    const canvas = document.getElementById('pdfViewer');
-    const ctx = canvas.getContext('2d');
+    // Worker PDF.js
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://mozilla.github.io/pdf.js/build/pdf.worker.mjs';
 
+    const container = document.getElementById('pdf-container');
+
+    // Charger le PDF
     pdfjsLib.getDocument(url).promise.then(pdf => {
-      // Affiche la première page
-      pdf.getPage(1).then(page => {
-        // Calcul pour FitH (largeur fenêtre)
-        const viewport = page.getViewport({ scale: 1 });
-        const scale = window.innerWidth / viewport.width;
-        const scaledViewport = page.getViewport({ scale });
+      console.log(`PDF chargé avec ${pdf.numPages} pages.`);
 
-        canvas.width = scaledViewport.width;
-        canvas.height = scaledViewport.height;
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+        pdf.getPage(pageNumber).then(page => {
+          const scale = 1.5;
+          const viewport = page.getViewport({ scale });
 
-        page.render({ canvasContext: ctx, viewport: scaledViewport });
-      });
-    });
+          // Créer un canvas pour chaque page
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+          container.appendChild(canvas);
 
-    // Plein écran au clic
-    document.body.addEventListener('click', () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {});
+          // Rendu de la page
+          page.render({ canvasContext: context, viewport }).promise.then(() => {
+            console.log(`Page ${pageNumber} rendue`);
+          });
+        });
       }
-    });
+    }).catch(err => console.error(err));
   </script>
 </body>
 </html>
