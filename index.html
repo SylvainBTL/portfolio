@@ -7,41 +7,67 @@
 <body>
   <h1>Visualiseur PDF.js - Toutes les pages</h1>
   <div id="pdf-container"></div>
-
-  <script type="module">
-    import { pdfjsLib } from 'https://mozilla.github.io/pdf.js/build/pdf.mjs';
-
-    // URL de ton PDF sur GitHub (raw)
-    const url = 'https://raw.githubusercontent.com/SylvainBTL/portfolio/5b4efef64fbf24ad84a01be004638f0b611c3206/Portfolio-SylvainBoutoille-2025.pdf';
-
-    // Worker PDF.js
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://mozilla.github.io/pdf.js/build/pdf.worker.mjs';
-
-    const container = document.getElementById('pdf-container');
-
-    // Charger le PDF
-    pdfjsLib.getDocument(url).promise.then(pdf => {
-      console.log(`PDF chargé avec ${pdf.numPages} pages.`);
-
-      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-        pdf.getPage(pageNumber).then(page => {
-          const scale = 1.5;
-          const viewport = page.getViewport({ scale });
-
-          // Créer un canvas pour chaque page
-          const canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d');
-          canvas.height = viewport.height;
-          canvas.width = viewport.width;
-          container.appendChild(canvas);
-
-          // Rendu de la page
-          page.render({ canvasContext: context, viewport }).promise.then(() => {
-            console.log(`Page ${pageNumber} rendue`);
+  
+  <!-- PDF.js UMD via unpkg -->
+  <script src="https://unpkg.com/pdfjs-dist@3.10.377/build/pdf.js"></script>
+  
+  <script>
+    // Fonction pour attendre que PDF.js soit chargé
+    function waitForPdfJs() {
+      return new Promise((resolve) => {
+        if (typeof pdfjsLib !== 'undefined') {
+          resolve();
+        } else {
+          setTimeout(() => {
+            waitForPdfJs().then(resolve);
+          }, 50);
+        }
+      });
+    }
+    
+    // Attendre que PDF.js soit complètement chargé
+    waitForPdfJs().then(() => {
+      
+      // URL raw de ton PDF sur GitHub
+      const url = 'https://raw.githubusercontent.com/SylvainBTL/portfolio/5b4efef64fbf24ad84a01be004638f0b611c3206/Portfolio-SylvainBoutoille-2025.pdf';
+      
+      // Configurer le worker PDF.js
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.10.377/build/pdf.worker.js';
+      
+      const container = document.getElementById('pdf-container');
+      
+      // Charger le PDF
+      pdfjsLib.getDocument(url).promise.then(pdf => {
+        console.log(`PDF chargé avec ${pdf.numPages} pages.`);
+        
+        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+          pdf.getPage(pageNumber).then(page => {
+            const scale = 1.5;
+            const viewport = page.getViewport({ scale });
+            
+            // Créer un canvas pour chaque page
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            
+            // Ajouter une marge entre les pages
+            canvas.style.display = 'block';
+            canvas.style.marginBottom = '20px';
+            canvas.style.border = '1px solid #ccc';
+            
+            container.appendChild(canvas);
+            
+            // Rendu de la page
+            page.render({ canvasContext: context, viewport }).promise.then(() => {
+              console.log(`Page ${pageNumber} rendue`);
+            });
           });
-        });
-      }
-    }).catch(err => console.error(err));
+        }
+      }).catch(err => {
+        console.error('Erreur lors du chargement du PDF:', err);
+      });
+    });
   </script>
 </body>
 </html>
